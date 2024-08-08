@@ -326,103 +326,41 @@ sap.ui.define([
             //     }
 
 
-            onBatchSaves: function () {
-                debugger
+            onBatchSave: function () {
+                // working
                 var that = this;
                 var addedProdCodeModel = that.getView().getModel("localModel").getData();
                 var batchChanges = [];
                 var url = that.getOwnerComponent().getModel().sServiceUrl;
-                var oDataModel = new sap.ui.model.odata.ODataModel(url);
-                // oDataModel.setUseBatch(true);
-                var uPath = "/ZPARK_RESERVE_ESUBSet";
-                // oDataModel.setDeferredGroups(["batchFunctionImport"]);
+                var oDataModel = this.getView().getModel();
+
+
+                var batchGroupId = "batchCreateGroup";
+
+                // Collect all create operations into the batchChanges array
                 addedProdCodeModel.items.forEach(item => {
-                    debugger;
-                    oDataModel.create(uPath, item, {
+                    // Create individual batch request
+                    oDataModel.create("/ZPARK_RESERVE_ESUBSet", item, {
                         method: "POST",
-                        success: function (data, response) {
-                            MessageBox.show("Batch Successful")
-                        },
-                        error: function (e) {
-                            MessageBox.show("Error" + e.message)
-                        }
+                        groupId: batchGroupId // Specify the batch group ID here
                     });
                 });
-                if (this.oFragment) {
-                    this.oFragment.close();
-                }
-            },
 
-            onBatchSave: function () {
-                debugger
-                var that = this;
-                var addedProdCodeModel = that.getView().getModel("localModel").getData();
-                var batchChanges = [];
-                var url = that.getOwnerComponent().getModel().sServiceUrl;
-                var oDataModel = new sap.ui.model.odata.ODataModel(url);
-                oDataModel.setUseBatch(true);
-                var uPath = "/ZPARK_RESERVE_ESUBSet";
-                for (var i = 0; i < addedProdCodeModel.items.length; i++) {
-                    var addRow = addedProdCodeModel.items[i];
-                    delete addRow.visible;
-                    batchChanges.push(oDataModel.createBatchOperation(uPath, "POST", addRow));
-                }
-                oDataModel.addBatchChangeOperations(batchChanges);
-                oDataModel.submitBatch(function (oData, oResponse) {
-                    // Success callback function
-                    if (oResponse.statusCode === "202" || oResponse.statusCode === 202) {
-                        sap.m.MessageBox.success("Recorde Created Successfully");
-                        that.tableRead();
+                // Submit all changes in the batch
+                oDataModel.submitChanges({
+                    groupId: batchGroupId,
+                    success: function (data, response) {
+                        MessageBox.show("Batch create operation successful.");
+                    },
+                    error: function (e) {
+                        // Parse the error response and show a meaningful message
+                        var errorMessage = e.message || "An error occurred";
+                        MessageBox.show("Error: " + errorMessage);
                     }
-                    // Handle the response data
-                }, function (oError) {
-                    // Error callback function
-                    sap.m.MessageBox.success("failed");
-                    // Handle the error
                 });
                 if (this.oFragment) {
                     this.oFragment.close();
                 }
             },
-
-
-            // onBatchSaves: function () {
-            //     debugger
-            //     var that = this;
-            //     var addedProdCodeModel = that.getView().getModel("localModel").getData();
-            //     var batchChanges = [];
-            //     var url = that.getOwnerComponent().getModel().sServiceUrl;
-            //     var oDataModel = new sap.ui.model.odata.ODataModel(url);
-            //     oDataModel.setUseBatch(true);
-
-            //     // Define the batch group ID
-            //     var batchGroupId = "batchFunctionImport";
-
-            //     // Collect all changes in the batchChanges array
-            //     addedProdCodeModel.items.forEach(item => {
-            //         var change = {
-            //             requestUri: "/ZPARK_RESERVE_ESUBSet",
-            //             method: "POST",
-            //             payload: item
-            //         }
-            //         batchChanges.push(change);
-            //     });
-
-            //     // Execute batch request
-            //     oDataModel.addBatchChangeOperations(batchChanges);
-            //     oDataModel.submitBatch(function (oData, oResponse) {
-            //         // Success callback function
-            //         if (oResponse.statusCode === "201" || oResponse.statusCode === 201) {
-            //             sap.m.MessageBox.success("Records Created Successfully");
-            //             that.tableRead();
-            //         }
-            //         // Handle the response data
-            //     }, function (oError) {
-            //         // Error callback function
-            //         sap.m.MessageBox.error("failed "+ oError.message);
-            //         // Handle the error
-            //     });
-
-            // }
         });
     });
